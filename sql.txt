@@ -1,0 +1,60 @@
+USE goit_rdb_hw_03;
+
+-- Завдання 1: Вкладений запит в операторі SELECT
+SELECT
+    *,
+    (SELECT customer_id FROM orders WHERE orders.order_id = order_details.order_id) AS customer
+FROM
+    order_details;
+
+-- Завдання 2: Вкладений запит в операторі WHERE
+SELECT *
+FROM order_details
+WHERE
+    order_id IN (SELECT order_id FROM orders WHERE shipper_id = 3);
+
+-- Завдання 3: Вкладений запит в операторі FROM
+SELECT
+    temp_table.order_id,
+    AVG(temp_table.quantity) AS average_quantity
+FROM
+    (SELECT * FROM order_details WHERE quantity > 10) AS temp_table
+GROUP BY
+    temp_table.order_id;
+
+-- Завдання 4: Використання оператора WITH
+WITH temp AS (
+    SELECT * FROM order_details WHERE quantity > 10
+)
+SELECT
+    order_id,
+    AVG(quantity) AS average_quantity
+FROM
+    temp
+GROUP BY
+    order_id;
+
+-- Завдання 5: Створення та використання функції
+SET GLOBAL log_bin_trust_function_creators = 1;
+DELIMITER $$
+
+DROP FUNCTION IF EXISTS DivideQuantity$$
+
+CREATE FUNCTION DivideQuantity(param1 FLOAT, param2 FLOAT)
+RETURNS FLOAT
+DETERMINISTIC
+BEGIN
+    DECLARE result FLOAT;
+    SET result = param1 / param2;
+    RETURN result;
+END$$
+
+DELIMITER ;
+
+-- Застосовання функції до стовпця quantity
+SELECT
+    order_detail_id,
+    quantity,
+    DivideQuantity(quantity, 2.5) AS divided_quantity
+FROM
+    order_details;
